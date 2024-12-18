@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { searchPlaylists, getPlaylistTracks } from '@/utils/spotify';
+import SpotifyWebApi from 'spotify-web-api-node';
+
+const spotifyApi = new SpotifyWebApi({
+  clientId: process.env.SPOTIFY_CLIENT_ID,
+  clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+});
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -10,17 +15,29 @@ export async function GET(request) {
   }
 
   try {
-    const playlists = await searchPlaylists(genre);
-    if (playlists.length === 0) {
-      return NextResponse.json({ error: 'No playlists found for this genre' }, { status: 404 });
-    }
-    const playlist = playlists[0];
-    const tracks = await getPlaylistTracks(playlist.id);
+    // Get access token
+    const data = await spotifyApi.clientCredentialsGrant();
+    spotifyApi.setAccessToken(data.body['access_token']);
 
-    return NextResponse.json({ playlist: tracks, playlistInfo: playlist });
+    // Search for tracks
+    const result = await spotifyApi.searchTracks(`genre:${genre}`, { limit: 10 });
+    const tracks = result.body.tracks.items;
+
+    const playlist = tracks.map(track => ({
+      id: track.id,
+      name: track.name,
+      artists: track.artists.map(artist => ({ name: artist.name })),
+      preview_url: track.preview_url,
+      album: {
+        name: track.album.name,
+        images: track.album.images,
+      },
+    }));
+
+    return NextResponse.json({ playlist });
   } catch (error) {
     console.error('Error generating playlist:', error);
-    return NextResponse.json({ error: 'Failed to generate playlist' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to generate playlist', details: error.message }, { status: 500 });
   }
 }
 

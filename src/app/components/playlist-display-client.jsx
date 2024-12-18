@@ -1,34 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Play, Pause } from 'lucide-react'
+import { Play, Pause, Music } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export default function PlaylistDisplay({ playlist }) {
+export default function PlaylistDisplayClient({ playlist }) {
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null)
+  const audioRef = useRef(null)
 
   useEffect(() => {
+    audioRef.current = new Audio()
     return () => {
-      if (currentlyPlaying) {
-        currentlyPlaying.audio.pause()
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
       }
     }
   }, [])
 
   if (playlist.length === 0) return null
 
-  const togglePlay = (track) => {
-    if (currentlyPlaying && currentlyPlaying.id === track.id) {
-      currentlyPlaying.audio.pause()
+  const togglePlay = (index) => {
+    if (currentlyPlaying === index) {
+      audioRef.current.pause()
       setCurrentlyPlaying(null)
     } else {
-      if (currentlyPlaying) {
-        currentlyPlaying.audio.pause()
+      if (currentlyPlaying !== null) {
+        audioRef.current.pause()
       }
-      const audio = new Audio(track.preview_url)
-      audio.play()
-      setCurrentlyPlaying({ id: track.id, audio })
+      audioRef.current.src = playlist[index].preview_url
+      audioRef.current.play()
+      setCurrentlyPlaying(index)
     }
   }
 
@@ -41,15 +44,17 @@ export default function PlaylistDisplay({ playlist }) {
     >
       <h2 className="text-3xl font-bold mb-6 text-center text-purple-300">Your Curated Playlist</h2>
       <ul className="space-y-4">
-        {playlist.map((song) => (
+        {playlist.map((song, index) => (
           <motion.li
-            key={song.id}
+            key={index}
             className="bg-gray-700/50 p-4 rounded-lg flex items-center space-x-4 hover:bg-gray-600/50 transition-colors duration-200"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
           >
-            <img src={song.album.images[0]?.url} alt={song.name} className="w-16 h-16 object-cover rounded" />
+            <div className="flex-shrink-0 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+              <Music className="w-6 h-6 text-white" />
+            </div>
             <div className="flex-grow">
               <h3 className="font-medium text-lg text-white">{song.name}</h3>
               <p className="text-sm text-gray-300">{song.artists[0].name}</p>
@@ -57,15 +62,11 @@ export default function PlaylistDisplay({ playlist }) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => togglePlay(song)}
-              disabled={!song.preview_url}
+              onClick={() => togglePlay(index)}
               className="text-purple-400 hover:text-purple-300 hover:bg-purple-800/50"
+              disabled={!song.preview_url}
             >
-              {currentlyPlaying && currentlyPlaying.id === song.id ? (
-                <Pause className="h-6 w-6" />
-              ) : (
-                <Play className="h-6 w-6" />
-              )}
+              {currentlyPlaying === index ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
             </Button>
           </motion.li>
         ))}
