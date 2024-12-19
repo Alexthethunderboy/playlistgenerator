@@ -7,6 +7,7 @@ import { ClipLoader } from 'react-spinners'
 import PlaylistDisplay from './playlist-display'
 import TopTracksAndAlbums from './top-tracks-and-albums'
 import RecommendedPlaylists from './recommended-playlists'
+import SpotifyCharts from './spotify-charts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import BackgroundAnimation from './background-animation'
@@ -65,33 +66,37 @@ export default function MusicPlaylistGenerator() {
         <p className="text-xl sm:text-2xl text-purple-200">Discover your next favorite playlist</p>
       </motion.div>
       <motion.div 
-        className="max-w-4xl mx-auto space-y-8 bg-gray-800/50 backdrop-blur-lg rounded-xl p-8 shadow-2xl"
+        className="max-w-6xl mx-auto space-y-12 bg-gray-800/50 backdrop-blur-lg rounded-xl p-8 shadow-2xl"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.3 }}
       >
-        <form onSubmit={generatePlaylist} className="flex gap-4">
-          <Input
-            type="text"
-            placeholder="Enter a genre, mood, or artist..."
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-            className="flex-grow bg-gray-700 text-white placeholder-gray-400 border-gray-600"
-          />
-          <Button 
-            type="submit" 
-            disabled={!genre || isLoading}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            {isLoading ? <ClipLoader size={20} color="#ffffff" /> : <Search className="w-5 h-5 mr-2" />}
-            Generate
-          </Button>
-        </form>
+        <SpotifyCharts />
+        <div className="border-t border-gray-700 pt-8">
+          <h2 className="text-3xl font-bold mb-6 text-center text-purple-300">Generate Custom Playlist</h2>
+          <form onSubmit={generatePlaylist} className="flex gap-4">
+            <Input
+              type="text"
+              placeholder="Enter a genre, mood, or artist..."
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+              className="flex-grow bg-gray-700 text-white placeholder-gray-400 border-gray-600"
+            />
+            <Button 
+              type="submit" 
+              disabled={!genre || isLoading}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {isLoading ? <ClipLoader size={20} color="#ffffff" /> : <Search className="w-5 h-5 mr-2" />}
+              Generate
+            </Button>
+          </form>
+        </div>
         {error && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-red-400 text-center"
+            className="text-red-400 text-center mt-4"
           >
             {error}
           </motion.p>

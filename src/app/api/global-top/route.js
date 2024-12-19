@@ -12,36 +12,38 @@ export async function GET() {
     const data = await spotifyApi.clientCredentialsGrant();
     spotifyApi.setAccessToken(data.body['access_token']);
 
-    // Get global top tracks
-    const tracksResult = await spotifyApi.getPlaylistTracks('37i9dQZEVXbMDoHDwVN2tF');  // This is Spotify's Global Top 50 playlist
-    const tracks = tracksResult.body.items.slice(0, 10);  // Get top 10 tracks
+    // Search for popular tracks
+    const tracksResult = await spotifyApi.searchTracks('year:2023', {
+      limit: 10,
+      market: 'US'
+    });
 
-    const formattedTracks = tracks.map(item => ({
-      id: item.track.id,
-      name: item.track.name,
-      artist: item.track.artists[0].name,
-      album: item.track.album.name,
-      image: item.track.album.images[0]?.url,
-      preview_url: item.track.preview_url,
-      popularity: item.track.popularity,
+    const formattedTracks = tracksResult.body.tracks.items.map(track => ({
+      id: track.id,
+      name: track.name,
+      artist: track.artists[0].name,
+      album: track.album.name,
+      image: track.album.images[0]?.url,
+      preview_url: track.preview_url,
+      popularity: track.popularity,
     }));
 
-    // Get global top albums (based on the tracks)
-    const topAlbums = Array.from(new Set(tracks.map(item => item.track.album.id)))
-      .slice(0, 5) // Limit to top 5 albums
-      .map(albumId => {
-        const track = tracks.find(item => item.track.album.id === albumId);
-        return {
-          id: track.track.album.id,
-          name: track.track.album.name,
-          artist: track.track.artists[0].name,
-          image: track.track.album.images[0]?.url,
-        };
-      });
+    // Search for popular albums
+    const albumsResult = await spotifyApi.searchAlbums('year:2023', {
+      limit: 5,
+      market: 'US'
+    });
+
+    const formattedAlbums = albumsResult.body.albums.items.map(album => ({
+      id: album.id,
+      name: album.name,
+      artist: album.artists[0].name,
+      image: album.images[0]?.url,
+    }));
 
     return NextResponse.json({ 
       top_tracks: formattedTracks,
-      top_albums: topAlbums,
+      top_albums: formattedAlbums,
     });
   } catch (error) {
     console.error('Error fetching global top tracks and albums:', error);
